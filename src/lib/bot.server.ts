@@ -313,7 +313,7 @@ async function handleCallback(cq: TgCallback, s: Settings, chatId: number) {
       await sb.from("reminders").update({ ack_date: now.date, snoozed_until: null }).eq("id", id);
       if (r.habit_id) await logHabit(r.habit_id, now.date);
       await answerCallback(cq.id, "أحسنت! ✅");
-      await close("✅ تم");
+      await close(`✅ تم: ${r.title}`);
       if (r.kind === "study") await studyCommand(chatId, "", s, now.date);
       return;
     }
@@ -321,7 +321,7 @@ async function handleCallback(cq: TgCallback, s: Settings, chatId: number) {
       const until = new Date(Date.now() + 3600_000).toISOString();
       await sb.from("reminders").update({ snoozed_until: until, last_sent_date: now.date }).eq("id", id);
       await answerCallback(cq.id, "سأذكّرك بعد ساعة ⏰");
-      return close("⏰ مؤجل ساعة");
+      return close(`⏰ مؤجل ساعة: ${r.title}`);
     }
     if (action === "k") {
       await sb.from("reminders").update({ ack_date: now.date, snoozed_until: null, last_sent_date: now.date }).eq("id", id);
