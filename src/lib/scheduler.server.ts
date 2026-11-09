@@ -64,7 +64,7 @@ export async function runTick() {
 
   // 2) Nag reminders sent today that are not done/skipped yet
   for (const r of reminders ?? []) {
-    if (!r.nag || ["morning", "evening"].includes(r.kind)) continue;
+    if ((!r.nag && !r.snoozed_until) || ["morning", "evening"].includes(r.kind)) continue;
     if (r.last_sent_date !== now.date || r.ack_date === now.date) continue;
     if (!projectActive(r)) continue;
     if (!isNagDue(r.last_sent_at, r.snoozed_until, interval, nowDate)) continue;
