@@ -299,7 +299,12 @@ async function handleCallback(cq: TgCallback, s: Settings, chatId: number) {
   const now = zonedNow(s.timezone);
   const msgId = cq.message?.message_id;
   const original = cq.message?.text ?? "";
-  const close = (status: string) => (msgId ? closeMessage(chatId, msgId, original, status) : Promise.resolve());
+  // Picker lists (/done, /snooze) keep their buttons; reminder messages get closed.
+  const isList = original.startsWith("اختر");
+  const close = async (status: string) => {
+    if (isList) await sendMessage(chatId, escapeHtml(status));
+    else if (msgId) await closeMessage(chatId, msgId, original, status);
+  };
 
   if (ns === "r") {
     const { data: r } = await sb.from("reminders").select("*").eq("id", id).maybeSingle();
@@ -331,7 +336,7 @@ async function handleCallback(cq: TgCallback, s: Settings, chatId: number) {
     if (action === "d") {
       await sb.from("tasks").update({ status: "done", completed_at: new Date().toISOString(), snoozed_until: null }).eq("id", id);
       await answerCallback(cq.id, "أحسنت! ✅");
-      return msgId && cq.message?.reply_markup_is_list ? undefined : close(`✅ تم: ${t.title}`);
+      return close(`✅ تم: ${t.title}`);
     }
     if (action === "s") {
       const until = new Date(Date.now() + 3600_000).toISOString();
